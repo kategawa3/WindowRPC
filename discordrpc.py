@@ -63,6 +63,12 @@ def check_exe_override(window_title):
             return state_message, details_message, logo
     return None, None, 'rpc_icon'  # Default to 'rpc_icon' if no override is found
 
+def truncate_text(text, max_length=60):
+    """Ensure the text is no longer than max_length characters, adding '...' if truncated."""
+    if len(text) > max_length:
+        return text[:max_length - 3] + "..."
+    return text
+
 def toggle_rpc():
     global rpc_enabled
     while True:
@@ -98,17 +104,25 @@ def update_rpc():
                 details_message = format_message(default_settings.get('details', ''), active_window_title, elapsed_str)
                 logo = 'rpc_icon'  # Default logo if no override
 
+            # Truncate to max 60 chars each line before updating RPC
+            state_message = truncate_text(state_message)
+            details_message = truncate_text(details_message)
+
             print(f"Updating RPC with state: '{state_message}', details: '{details_message}', and logo: '{logo}'")
             RPC.update(
                 state=state_message,
                 details=details_message,
-                large_image=logo,  # Use the dynamic logo
+                large_image=logo,
                 large_text="0.6.1"
             )
         else:
+            # When disabled, update with a simple fallback message truncated as well
+            fallback_state = truncate_text(f"{elapsed_str} - Current window cannot be detected!")
+            fallback_details = truncate_text("Currently using:")
+
             RPC.update(
-                state=f"{elapsed_str} - Current window cannot be detected!",
-                details="Currently using:"
+                state=fallback_state,
+                details=fallback_details
             )
         
         time.sleep(interval)
