@@ -4,7 +4,7 @@ WindowRPC is a Python-based tool that automatically updates your Discord status 
 ## Supported Platforms
 Windows(this branch)
 
-[Linux](https://github.com/ios7jbpro/WindowRPC/tree/kde-linux)
+[Linux(KDE Plasma Wayland)](https://github.com/ios7jbpro/WindowRPC/tree/kde-linux)
 
 ## Features
 - Automatically updates Discord Rich Presence based on the currently active window.
