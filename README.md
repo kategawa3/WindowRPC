@@ -9,8 +9,6 @@ Windows(this branch)(*OUTDATED! kde-linux HAS MORE FEATURES. THIS BRANCH NEEDS T
 ## Features
 - Automatically updates Discord Rich Presence based on the currently active window.
 - Customize your status for specific applications.
-- Lightweight and easy to set up.
-- Windows-only support (for now).
 
 ## Installation
 To get started with WindowRPC:
