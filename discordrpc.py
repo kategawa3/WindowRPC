@@ -51,51 +51,87 @@ def get_active_window_title():
     window = gw.getActiveWindow()
     return window.title if window else "No active window"
 
-def format_message(template, window_title, elapsed_str, total_elapsed_str):
-    """ Replace placeholders in the template with actual values """
-    return (template
-            .replace("appname", window_title)
-            .replace("timestamp", elapsed_str)
-            .replace("totaltimestamp", total_elapsed_str))
+def format_message(template, window_title, elapsed_str, total_elapsed_str, media_info=None):
+    """Replace placeholders in template"""
+    return (template.replace("appname", window_title)
+                    .replace("timestamp", elapsed_str)
+                    .replace("totaltimestamp", total_elapsed_str))
 
 # tracking start times
 start_time = time.time()  # script-wide start time
 app_start_times = {}      # per-app start times {app_name: timestamp}
 
-def check_exe_override(window_title):
+# state tracking
+active_game = None  # currently locked game override
+
+# ------------------ override logic -------------------
+def match_override(window_title):
+    """Find matching override based on title + match_mode logic."""
     for app_name, message in sorted_overrides:
         match_mode = message.get('match_mode', 'unimportant').lower()
-
         if match_mode == "exact":
             if window_title.lower() != app_name.lower():
                 continue
-            print(f"[EXACT match] Override found for {window_title}: {message}")
-        else:  # unimportant = substring
+        else:
             if app_name.lower() not in window_title.lower():
                 continue
-            print(f"[SUBSTRING match] Override found for {window_title}: {message}")
+        return app_name, message
+    return None, None
 
-        # set per-app start time if not tracked already
-        if app_name not in app_start_times:
-            app_start_times[app_name] = time.time()
+def process_override(app_name, message, window_title):
+    """Build messages and handle timestamps for a matched override."""
+    # detect media override and block it on Windows
+    if message.get("override_mode") == "media":
+        print(f"Media override detected ({app_name}) – unsupported on Windows. Showing warning RPC.")
+        return "Unsupported", "This action is unsupported in Windows releases.", 'rpc_icon'
 
-        # per-app timestamp
-        app_elapsed_time = time.time() - app_start_times[app_name]
-        app_elapsed_str = f"{int(app_elapsed_time // 60)}m {int(app_elapsed_time % 60)}s"
+    if app_name not in app_start_times:
+        app_start_times[app_name] = time.time()
 
-        # total timestamp
-        total_elapsed_time = time.time() - start_time
-        total_elapsed_str = f"{int(total_elapsed_time // 60)}m {int(total_elapsed_time % 60)}s"
+    app_elapsed_time = time.time() - app_start_times[app_name]
+    app_elapsed_str = f"{int(app_elapsed_time // 60)}m {int(app_elapsed_time % 60)}s"
 
-        state_message = format_message(message['state'], window_title, app_elapsed_str, total_elapsed_str)
-        details_message = format_message(message['details'], window_title, app_elapsed_str, total_elapsed_str)
-        logo = message.get('logo', 'rpc_icon')
-        return state_message, details_message, logo
+    total_elapsed_time = time.time() - start_time
+    total_elapsed_str = f"{int(total_elapsed_time // 60)}m {int(total_elapsed_time % 60)}s"
+
+    state_message = format_message(message['state'], window_title, app_elapsed_str, total_elapsed_str)
+    details_message = format_message(message['details'], window_title, app_elapsed_str, total_elapsed_str)
+    logo = message.get('logo', 'rpc_icon')
+    return state_message, details_message, logo
+
+def determine_override(active_window_title):
+    global active_game
+
+    # 1. game mode
+    if active_game:
+        app_name, message = active_game
+        open_titles = [w.title for w in gw.getAllWindows() if w.title]
+        still_running = any(app_name.lower() in t.lower() for t in open_titles)
+        if still_running:
+            return process_override(app_name, message, active_window_title)
+        else:
+            print(f"Game {app_name} closed, clearing active game")
+            active_game = None
+
+    # 2. check focused window for game override
+    app_name, message = match_override(active_window_title)
+    if app_name and message.get("override_mode") == "game":
+        active_game = (app_name, message)
+        print(f"Game detected and locked: {app_name}")
+        return process_override(app_name, message, active_window_title)
+
+    # 3. media override – unsupported on Windows
+    if app_name and message.get("override_mode") == "media":
+        return process_override(app_name, message, active_window_title)
+
+    # 4. none/default
+    if app_name and message.get("override_mode", "none") == "none":
+        return process_override(app_name, message, active_window_title)
 
     return None, None, 'rpc_icon'
 
+# ------------------ main loop -------------------
 def truncate_text(text, max_length=60):
-    """Ensure the text is no longer than max_length characters, adding '...' if truncated."""
     if len(text) > max_length:
         return text[:max_length - 3] + "..."
     return text
@@ -105,25 +141,22 @@ rpc_enabled = True
 def update_rpc():
     global interval, rpc_enabled
     while True:
-        # total timestamp
         total_elapsed_time = time.time() - start_time
         total_elapsed_str = f"{int(total_elapsed_time // 60)}m {int(total_elapsed_time % 60)}s"
-        
+
         if rpc_enabled:
             active_window_title = get_active_window_title()
             print(f"Detected window: {active_window_title}")
-            
-            state, details, logo = check_exe_override(active_window_title)
-            
+
+            state, details, logo = determine_override(active_window_title)
+
             if state and details:
                 state_message = truncate_text(state)
                 details_message = truncate_text(details)
             else:
-                # default fallback uses total timestamp only
                 state_message = format_message(default_settings.get('state', ''), active_window_title, total_elapsed_str, total_elapsed_str)
                 details_message = format_message(default_settings.get('details', ''), active_window_title, total_elapsed_str, total_elapsed_str)
                 logo = 'rpc_icon'
-
                 state_message = truncate_text(state_message)
                 details_message = truncate_text(details_message)
 
@@ -137,20 +170,18 @@ def update_rpc():
         else:
             fallback_state = truncate_text(f"{total_elapsed_str} - Current window cannot be detected!")
             fallback_details = truncate_text("Currently using:")
-
             RPC.update(
                 state=fallback_state,
                 details=fallback_details
             )
-        
+
         time.sleep(interval)
 
-# --- System tray logic ---
+# ------------------ tray -------------------
 def toggle_rpc_action(icon, item):
     global rpc_enabled
     rpc_enabled = not rpc_enabled
-    status = "Enabled" if rpc_enabled else "Disabled"
-    print(f"RPC is now {status}")
+    print(f"RPC is now {'Enabled' if rpc_enabled else 'Disabled'}")
 
 def refresh_files_action(icon, item):
     refresh_files()
@@ -163,7 +194,6 @@ def exit_action(icon, item):
 def create_tray():
     icon_path = os.path.join(os.path.dirname(__file__), "discord_icon.png")
     image = Image.open(icon_path)
-
     menu = pystray.Menu(
         pystray.MenuItem("Toggle RPC", toggle_rpc_action),
         pystray.MenuItem("Refresh files", refresh_files_action),
@@ -172,9 +202,7 @@ def create_tray():
     icon = pystray.Icon("DiscordRPC", image, "Discord RPC", menu)
     icon.run()
 
-# Start tray in background thread
 tray_thread = threading.Thread(target=create_tray, daemon=True)
 tray_thread.start()
 
-# Run the RPC update loop
 update_rpc()
