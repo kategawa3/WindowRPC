@@ -51,36 +51,48 @@ def get_active_window_title():
     window = gw.getActiveWindow()
     return window.title if window else "No active window"
 
-def format_message(template, window_title, elapsed_str):
+def format_message(template, window_title, elapsed_str, total_elapsed_str):
     """ Replace placeholders in the template with actual values """
-    return template.replace("appname", window_title).replace("timestamp", elapsed_str)
+    return (template
+            .replace("appname", window_title)
+            .replace("timestamp", elapsed_str)
+            .replace("totaltimestamp", total_elapsed_str))
+
+# tracking start times
+start_time = time.time()  # script-wide start time
+app_start_times = {}      # per-app start times {app_name: timestamp}
 
 def check_exe_override(window_title):
     for app_name, message in sorted_overrides:
-        # fallback: if no match_mode, treat as "unimportant"
         match_mode = message.get('match_mode', 'unimportant').lower()
 
         if match_mode == "exact":
-            if window_title.lower() == app_name.lower():
-                print(f"[EXACT match] Override found for {window_title}: {message}")
-            else:
-                continue  # skip, must match exactly
-        else:  # unimportant = substring search
+            if window_title.lower() != app_name.lower():
+                continue
+            print(f"[EXACT match] Override found for {window_title}: {message}")
+        else:  # unimportant = substring
             if app_name.lower() not in window_title.lower():
                 continue
             print(f"[SUBSTRING match] Override found for {window_title}: {message}")
 
-        # at this point, we have a match
-        elapsed_time = time.time() - start_time
-        elapsed_str = f"{int(elapsed_time // 60)}m {int(elapsed_time % 60)}s"
-        state_message = format_message(message['state'], window_title, elapsed_str)
-        details_message = format_message(message['details'], window_title, elapsed_str)
+        # set per-app start time if not tracked already
+        if app_name not in app_start_times:
+            app_start_times[app_name] = time.time()
+
+        # per-app timestamp
+        app_elapsed_time = time.time() - app_start_times[app_name]
+        app_elapsed_str = f"{int(app_elapsed_time // 60)}m {int(app_elapsed_time % 60)}s"
+
+        # total timestamp
+        total_elapsed_time = time.time() - start_time
+        total_elapsed_str = f"{int(total_elapsed_time // 60)}m {int(total_elapsed_time % 60)}s"
+
+        state_message = format_message(message['state'], window_title, app_elapsed_str, total_elapsed_str)
+        details_message = format_message(message['details'], window_title, app_elapsed_str, total_elapsed_str)
         logo = message.get('logo', 'rpc_icon')
         return state_message, details_message, logo
 
-    # no override matched
     return None, None, 'rpc_icon'
-
 
 def truncate_text(text, max_length=60):
     """Ensure the text is no longer than max_length characters, adding '...' if truncated."""
@@ -89,13 +101,13 @@ def truncate_text(text, max_length=60):
     return text
 
 rpc_enabled = True
-start_time = time.time()
 
 def update_rpc():
     global interval, rpc_enabled
     while True:
-        elapsed_time = time.time() - start_time
-        elapsed_str = f"{int(elapsed_time // 60)}m {int(elapsed_time % 60)}s"
+        # total timestamp
+        total_elapsed_time = time.time() - start_time
+        total_elapsed_str = f"{int(total_elapsed_time // 60)}m {int(total_elapsed_time % 60)}s"
         
         if rpc_enabled:
             active_window_title = get_active_window_title()
@@ -104,15 +116,16 @@ def update_rpc():
             state, details, logo = check_exe_override(active_window_title)
             
             if state and details:
-                state_message = format_message(state, active_window_title, elapsed_str)
-                details_message = format_message(details, active_window_title, elapsed_str)
+                state_message = truncate_text(state)
+                details_message = truncate_text(details)
             else:
-                state_message = format_message(default_settings.get('state', ''), active_window_title, elapsed_str)
-                details_message = format_message(default_settings.get('details', ''), active_window_title, elapsed_str)
+                # default fallback uses total timestamp only
+                state_message = format_message(default_settings.get('state', ''), active_window_title, total_elapsed_str, total_elapsed_str)
+                details_message = format_message(default_settings.get('details', ''), active_window_title, total_elapsed_str, total_elapsed_str)
                 logo = 'rpc_icon'
 
-            state_message = truncate_text(state_message)
-            details_message = truncate_text(details_message)
+                state_message = truncate_text(state_message)
+                details_message = truncate_text(details_message)
 
             print(f"Updating RPC with state: '{state_message}', details: '{details_message}', and logo: '{logo}'")
             RPC.update(
@@ -122,7 +135,7 @@ def update_rpc():
                 large_text="0.6.1"
             )
         else:
-            fallback_state = truncate_text(f"{elapsed_str} - Current window cannot be detected!")
+            fallback_state = truncate_text(f"{total_elapsed_str} - Current window cannot be detected!")
             fallback_details = truncate_text("Currently using:")
 
             RPC.update(
