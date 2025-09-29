@@ -49,6 +49,3 @@ Once the script is running, your Discord status will automatically update based 
 - kurtbahartr
 - ChatGPT(i have problems i know)
 - This project was intended to be AI-generated only. However, simple contributions that remain easy for AI to parse and understand are welcome. Please submit issues or pull requests that align with this guideline.
-
-## Issues and Support
-For any issues or questions, please open a ticket in the Issues tab.
