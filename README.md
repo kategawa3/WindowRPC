@@ -12,6 +12,7 @@ Windows(this branch)
 
 ### These features do NOT work in Windows releases, because they are not possible to implement.
 [x] override_mode=media
+
 [x] Any of the media aliases(mtitle, martist, etc)
 
 ## Installation
