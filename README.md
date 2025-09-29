@@ -25,7 +25,7 @@ cd WindowRPC
 Ensure you have Python installed, then install the required dependencies using pip:
 
 ```
-pip install pygetwindow pypresence
+pip install pygetwindow pypresence pystray
 ```
 
 ### Create a Discord Application
