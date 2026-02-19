@@ -33,6 +33,8 @@ Ensure you have Python installed, then install the required dependencies using p
 pip install pygetwindow pypresence pystray
 ```
 
+Also install kdotool and playerctl from your system's repositories.
+
 ### Create a Discord Application
 Go to the [Discord Developer Portal](https://discord.com/developers/applications) and create a new application. The application name will be what's shown as the application name in the rich presence. Note the Application ID.
 
