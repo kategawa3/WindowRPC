@@ -33,8 +33,6 @@ Ensure you have Python installed, then install the required dependencies using p
 pip install pygetwindow pypresence pystray
 ```
 
-Also install kdotool and playerctl from your system's repositories.
-
 ### Create a Discord Application
 Go to the [Discord Developer Portal](https://discord.com/developers/applications) and create a new application. The application name will be what's shown as the application name in the rich presence. Note the Application ID.
 
@@ -50,6 +48,9 @@ python discordrpc.py
 
 ## Usage
 Once the script is running, your Discord status will automatically update based on the active window. You can customize specific application statuses by modifying the script.
+
+## Customization
+[Guide](https://github.com/ios7jbpro/WindowRPC/tree/overrides-guide)
 
 ## Contributors
 - ios7jbpro
