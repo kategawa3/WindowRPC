@@ -55,5 +55,5 @@ Once the script is running, your Discord status will automatically update based 
 ## Contributors
 - ios7jbpro
 - kurtbahartr
-- ChatGPT(i have problems i know)
+- ChatGPT(THIS PROJECT IS HEAVILY SLOPCODED I DON'T CARE IF YOU LIKE IT OR NOT)
 - This project was intended to be AI-generated only. However, simple contributions that remain easy for AI to parse and understand are welcome. Please submit issues or pull requests that align with this guideline.
