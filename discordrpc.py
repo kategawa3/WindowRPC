@@ -165,7 +165,7 @@ def update_rpc():
                 state=state_message,
                 details=details_message,
                 large_image=logo,
-                large_text="0.6.1"
+                large_text="0.6.1-linux(KDE)"
             )
         else:
             fallback_state = truncate_text(f"{total_elapsed_str} - Current window cannot be detected!")
@@ -206,3 +206,4 @@ tray_thread = threading.Thread(target=create_tray, daemon=True)
 tray_thread.start()
 
 update_rpc()
+
