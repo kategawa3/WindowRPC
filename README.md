@@ -4,7 +4,7 @@ WindowRPC is a Python-based tool that automatically updates your Discord status 
 ## Supported Platforms
 Windows(this branch)
 
-[Linux(KDE Plasma Wayland)](https://github.com/ios7jbpro/WindowRPC/tree/kde-linux)
+~~Linux(Fuck the linux port)~~
 
 ## Features
 - Automatically updates Discord Rich Presence based on the currently active window.
@@ -22,7 +22,7 @@ To get started with WindowRPC:
 Clone this repository to your local machine:
 
 ```
-git clone https://github.com/yourusername/WindowRPC.git
+git clone https://github.com/kategawa3/WindowRPC.git
 cd WindowRPC
 ```
 
@@ -38,7 +38,7 @@ Go to the [Discord Developer Portal](https://discord.com/developers/applications
 
 
 ### Run the Script
-Start the script using the command line:
+Start the script using the command line (Run as an Administrator):
 
 ```
 python discordrpc.py
@@ -50,7 +50,7 @@ python discordrpc.py
 Once the script is running, your Discord status will automatically update based on the active window. You can customize specific application statuses by modifying the script.
 
 ## Customization
-[Guide](https://github.com/ios7jbpro/WindowRPC/tree/overrides-guide)
+[Guide by ios7](https://github.com/ios7jbpro/WindowRPC/tree/overrides-guide)
 
 ## Contributors
 - ios7jbpro
