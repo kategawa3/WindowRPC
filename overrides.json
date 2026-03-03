@@ -58,5 +58,10 @@
      "logo": "https://raw.githubusercontent.com/ios7jbpro/WindowRPC/refs/heads/main/icons/msi.png",
      "details": "MSI Center",
      "state": "timestamp"
+    },
+     "NTLite": {
+     "logo": "E:/Downloads/WindowRPC/icons/NTLite.png",
+     "details": "NTLite",
+     "state": "Making ISOs like a retard"
     }
 }
